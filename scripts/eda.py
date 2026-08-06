@@ -14,8 +14,6 @@ holds only what every training script needs at runtime (split, leakage
 check, vocab); this script is a one-off human-facing analysis, run once
 to justify modelling choices in the report.
 
-Usage:
-    python src/eda.py
 """
 import os
 
@@ -58,7 +56,7 @@ def length_stats(train: pd.DataFrame) -> None:
 
 def majority_baseline(train: pd.DataFrame) -> float: #Always predict the 3 most frequent options, ranked by frequency
     top3_options = train["answer"].value_counts().index[:3].tolist()
-    y_true = train["answer"].map(LABEL_MAP).tolist() # convert letter answers -> integer class ids
+    y_true = train["answer"].map(LABEL_MAP).tolist() # LABEL_MAP is a dict like {'A':0, 'B':1, 'C':2, 'D':3, 'E':4}. This just converts every correct-answer letter into its integer id, because map_at_3 needs numbers, not letters.
 
     # MAP@3 needs a score per option per row, so fake up logits: give the top-3 options descending scores (3, 2, 1) and everything else 0, same for every row
     fake_logits = torch.zeros(len(train), 5)
