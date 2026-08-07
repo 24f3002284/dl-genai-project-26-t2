@@ -41,9 +41,29 @@ def stratified_split(train_df: pd.DataFrame, val_size: float = VAL_SIZE, seed: i
         train_df, test_size=val_size, random_state=seed, stratify=train_df["answer"]
     )
 
-  doooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
     check_leakage(train_split, val_split)
     return train_split.reset_index(drop=True), val_split.reset_index(drop=True)
   
 def tokenize(text: str):
-    return str(text).lower().split()  # crude word split -- fine for a baseline, not meant to rival a real tokenizer
+    return str(text).lower().split()  
+
+def build_vocab(train_df: pd.DataFrame, test_df: pd.DataFrame, min_count: int = 2):
+    """Word-level vocabulary for the from-scratch embedding model only."""
+    all_text = []
+    for col in ["prompt", "A", "B", "C", "D", "E"]:
+        # include test set too -- otherwise any word only seen at test time becomes <UNK>
+        train_df[col].fillna("").apply(lambda x: all_text.extend(tokenize(x)))
+        test_df[col].fillna("").apply(lambda x: all_text.extend(tokenize(x)))
+
+    vocab = {"<PAD>": 0, "<UNK>": 1}  # reserve ids 0/1 before assigning real words
+    for word, count in Counter(all_text).items():
+        if count >= min_count:  # drop words seen only once -- probably typos/noise, not worth an embedding slot
+            vocab[word] = len(vocab)
+    print(f"Vocab size: {len(vocab)}")
+    return vocab
+
+def encode(text: str, vocab: dict, max_len: int = 64):
+    tokens = tokenize(text)[:max_len]  # truncate long text so every sequence fits the model's fixed input size
+    ids = [vocab.get(t, 1) for t in tokens]  # unknown words fall back to <UNK> (id 1)
+    ids += [0] * (max_len - len(ids))  # pad the rest with <PAD> (id 0) so every sequence is the same length
+    return ids
