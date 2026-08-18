@@ -1,0 +1,13 @@
+# Core data handling
+numpy==1.26.4
+pandas==2.2.2
+
+# Deep learning
+torch==2.4.0
+transformers==4.44.2
+
+# Experiment tracking
+wandb==0.19.1
+
+# ML utilities (train/val split, F1, accuracy)
+scikit-learn==1.5.1
